@@ -95,7 +95,19 @@ public abstract class Distribution extends Iced<Distribution> {
     public double deviance(double w, double y, double f) {
         throw H2O.unimpl();
     }
-    
+
+    /**
+     * Deviance of given distribution function at predicted value f calculated by the full non-optimized formula
+     *
+     * @param w observation weight
+     * @param y (actual) response
+     * @param f (predicted) response in original response space (including offset)
+     * @return deviance
+     */
+    public double deviance2(double w, double y, double f) {
+        throw H2O.unimpl();
+    }
+
     /**
      * (Negative half) Gradient of deviance function at predicted value f, for actual response y
      * This assumes that the deviance(w,y,f) is w*deviance(y,f), so the gradient is w * d/df deviance(y,f)
