@@ -1338,6 +1338,17 @@ public abstract class Model<M extends Model<M,P,O>, P extends Model.Parameters, 
     return _dist.deviance(w, y, f);
   }
 
+  /**
+   * Deviance of given distribution function at predicted value f - calculated by the full non-optimized formula
+   * @param w observation weight
+   * @param y (actual) response
+   * @param f (predicted) response in original response space
+   * @return value of gradient
+   */
+  public double deviance2(double w, double y, double f) {
+    return _dist.deviance2(w, y, f);
+  }
+
   public double likelihood(double w, double y, double f) {
     return 0.0; // place holder.  This function is overridden in GLM.
   }
@@ -2009,9 +2020,11 @@ public abstract class Model<M extends Model<M,P,O>, P extends Model.Parameters, 
             double f=cs[0].atd(i);
             if (myDist!=null && myDist._family == DistributionFamily.huber) {
               nc[0].addNum(myDist.deviance(w, y, f)); //use above custom huber delta for this dataset
+              nc[1].addNum(myDist.deviance2(w, y, f));
             }
             else {
               nc[0].addNum(deviance(w, y, f));
+              nc[1].addNum(deviance2(w, y, f));
             }
           } else {
             int iact=(int)y;
@@ -2020,7 +2033,7 @@ public abstract class Model<M extends Model<M,P,O>, P extends Model.Parameters, 
           }
         }
       }
-    }.doAll(Vec.T_NUM, predictions).outputFrame(Key.<Frame>make(outputName), new String[]{"deviance"}, null);
+    }.doAll(new byte[]{Vec.T_NUM, Vec.T_NUM}, predictions).outputFrame(Key.<Frame>make(outputName), new String[]{"deviance", "deviance2"}, null);
   }
 
   protected String[] makeScoringNames(){

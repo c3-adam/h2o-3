@@ -19,13 +19,18 @@ public class ModelMetricsRegression extends ModelMetricsSupervised {
   public double residual_deviance() { return _mean_residual_deviance; }
   @SuppressWarnings("unused")
   public double mean_residual_deviance() { return _mean_residual_deviance; }
+  public final double _mean_residual_deviance_2;
+  public double residual_deviance_2() { return _mean_residual_deviance_2; }
+  @SuppressWarnings("unused")
+  public double mean_residual_deviance_2() { return _mean_residual_deviance_2; }
   public final double _mean_absolute_error;
   public double mae() { return _mean_absolute_error; }
   public final double _root_mean_squared_log_error;
   public double rmsle() { return _root_mean_squared_log_error; }
-  public ModelMetricsRegression(Model model, Frame frame, long nobs, double mse, double sigma, double mae,double rmsle, double meanResidualDeviance, CustomMetric customMetric) {
+  public ModelMetricsRegression(Model model, Frame frame, long nobs, double mse, double sigma, double mae,double rmsle, double meanResidualDeviance, double meanResidualDeviance2, CustomMetric customMetric) {
     super(model, frame, nobs, mse, null, sigma, customMetric);
     _mean_residual_deviance = meanResidualDeviance;
+    _mean_residual_deviance_2 = meanResidualDeviance2;
     _mean_absolute_error = mae;
     _root_mean_squared_log_error = rmsle;
   }
@@ -48,6 +53,11 @@ public class ModelMetricsRegression extends ModelMetricsSupervised {
       sb.append(" mean residual deviance: " + (float) _mean_residual_deviance + "\n");
     } else {
       sb.append(" mean residual deviance: N/A\n");
+    }
+    if(!Double.isNaN(_mean_residual_deviance_2)) {
+      sb.append(" mean residual deviance (non-optimized formula): " + (float) _mean_residual_deviance_2 + "\n");
+    } else {
+      sb.append(" mean residual deviance (non-optimized formula): N/A\n");
     }
     sb.append(" mean absolute error: " + (float)_mean_absolute_error + "\n");
     sb.append(" root mean squared log error: " + (float)_root_mean_squared_log_error + "\n");
@@ -114,6 +124,7 @@ public class ModelMetricsRegression extends ModelMetricsSupervised {
 
   public static class MetricBuilderRegression<T extends MetricBuilderRegression<T>> extends MetricBuilderSupervised<T> {
     double _sumdeviance;
+    double _sumdeviance2;
     Distribution _dist;
     double _abserror;
     double _rmslerror;
@@ -143,8 +154,10 @@ public class ModelMetricsRegression extends ModelMetricsSupervised {
       if((m != null && m._parms._distribution != DistributionFamily.custom) || (_dist != null && _dist ._family != DistributionFamily.custom)) {
         if (m != null && !m.isDistributionHuber()) {
           _sumdeviance += m.deviance(w, yact[0], ds[0]);
+          _sumdeviance2 += m.deviance2(w, yact[0], ds[0]);
         } else if (_dist != null) {
           _sumdeviance += _dist.deviance(w, yact[0], ds[0]);
+          _sumdeviance2 += _dist.deviance2(w, yact[0], ds[0]);
         }
       }
       
@@ -158,6 +171,7 @@ public class ModelMetricsRegression extends ModelMetricsSupervised {
     @Override public void reduce( T mb ) {
       super.reduce(mb);
       _sumdeviance += mb._sumdeviance;
+      _sumdeviance2 += mb._sumdeviance2;
       _abserror += mb._abserror;
       _rmslerror += mb._rmslerror;
     }
@@ -175,8 +189,10 @@ public class ModelMetricsRegression extends ModelMetricsSupervised {
       double rmsle = Math.sqrt(_rmslerror/_wcount); //Root Mean Squared Log Error
       if (adaptedFrame ==null) adaptedFrame = f;
       double meanResDeviance = 0;
+      double meanResDeviance2 = 0;
       if (m != null && m.isDistributionHuber()){
         assert(_sumdeviance==0); // should not yet be computed
+        assert(_sumdeviance2==0); // should not yet be computed
         if (preds != null) {
           Vec actual = adaptedFrame.vec(m._parms._response_column);
           Vec weight = adaptedFrame.vec(m._parms._weights_column);
@@ -189,13 +205,16 @@ public class ModelMetricsRegression extends ModelMetricsSupervised {
           _dist.setHuberDelta(huberDelta);
 
           meanResDeviance = new MeanResidualDeviance(_dist, preds.anyVec(), actual, weight).exec().meanResidualDeviance;
+          meanResDeviance2 = new MeanResidualDeviance(_dist, preds.anyVec(), actual, weight).exec().meanResidualDeviance2;
         }
       } else if((m != null && m._parms._distribution != DistributionFamily.custom) || (_dist != null && _dist._family != DistributionFamily.custom) ) {
         meanResDeviance = _sumdeviance / _wcount; //mean residual deviance
+        meanResDeviance2 = _sumdeviance2 / _wcount; //mean residual deviance 2
       } else {
         meanResDeviance = Double.NaN;
+        meanResDeviance2 = Double.NaN;
       }
-      ModelMetricsRegression mm = new ModelMetricsRegression(m, f, _count, mse, weightedSigma(), mae, rmsle, meanResDeviance, _customMetric);
+      ModelMetricsRegression mm = new ModelMetricsRegression(m, f, _count, mse, weightedSigma(), mae, rmsle, meanResDeviance, meanResDeviance2, _customMetric);
       return mm;
     }
   }

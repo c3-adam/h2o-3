@@ -105,7 +105,8 @@ public abstract class Distribution extends Iced<Distribution> {
      * @return deviance
      */
     public double deviance2(double w, double y, double f) {
-        throw H2O.unimpl();
+        // if not overriden, equals to the original deviance
+        return deviance(w, y, f);
     }
 
     /**

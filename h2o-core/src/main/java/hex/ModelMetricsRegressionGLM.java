@@ -16,7 +16,7 @@ public class ModelMetricsRegressionGLM extends ModelMetricsRegression implements
                                    double mae, double rmsle, double resDev, double meanResDev,
                                    double nullDev, double aic, long nDof, long rDof,
                                    CustomMetric customMetric) {
-    super(model, frame, nobs, mse, sigma, mae, rmsle, meanResDev, customMetric);
+    super(model, frame, nobs, mse, sigma, mae, rmsle, meanResDev, meanResDev/*not used in GLM*/, customMetric);
     _resDev = resDev;
     _nullDev = nullDev;
     _AIC = aic;

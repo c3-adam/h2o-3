@@ -16,6 +16,7 @@ public class MeanResidualDeviance extends Iced {
 
   //OUTPUT
   public double meanResidualDeviance;
+  public double meanResidualDeviance2;
 
   public MeanResidualDeviance(Distribution dist, Vec preds, Vec actuals, Vec weights) {
     _preds = preds;
@@ -54,6 +55,7 @@ public class MeanResidualDeviance extends Iced {
       MeanResidualBuilder gt = new MeanResidualBuilder(_dist);
       gt = (_weights != null) ? gt.doAll(_actuals, _preds, _weights) : gt.doAll(_actuals, _preds);
       meanResidualDeviance=gt._mean_residual_deviance;
+      meanResidualDeviance2=gt._mean_residual_deviance_2;
     } finally {
       Scope.exit();
     }
@@ -63,6 +65,7 @@ public class MeanResidualDeviance extends Iced {
   // Compute Mean Residual Deviance table via MRTask
   public static class MeanResidualBuilder extends MRTask<MeanResidualBuilder> {
     public double _mean_residual_deviance;
+    public double _mean_residual_deviance_2;
     private double _wcount;
     private Distribution _dist;
 
@@ -71,6 +74,7 @@ public class MeanResidualDeviance extends Iced {
     @Override public void map(Chunk ca, Chunk cp) { map(ca, cp, (Chunk)null); }
     @Override public void map(Chunk ca, Chunk cp, Chunk cw) {
       _mean_residual_deviance=0;
+      _mean_residual_deviance_2=0;
       _wcount=0;
       final int len = Math.min(ca._len, cp._len);
       for( int i=0; i < len; i++ ) {
@@ -89,16 +93,19 @@ public class MeanResidualDeviance extends Iced {
       assert (!Double.isNaN(a));
       assert (!Double.isNaN(w));
       _mean_residual_deviance+=_dist.deviance(w,a,pr);
+      _mean_residual_deviance_2+=_dist.deviance2(w,a,pr);
       _wcount+=w;
     }
 
     @Override public void reduce(MeanResidualBuilder other) {
       _mean_residual_deviance += other._mean_residual_deviance;
+      _mean_residual_deviance_2 += other._mean_residual_deviance_2;
       _wcount += other._wcount;
     }
 
     @Override public void postGlobal(){
       _mean_residual_deviance/=_wcount;
+      _mean_residual_deviance_2/=_wcount;
     }
   }
 }

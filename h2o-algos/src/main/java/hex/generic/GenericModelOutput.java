@@ -152,7 +152,8 @@ public class GenericModelOutput extends Model.Output {
                     MojoModelMetricsRegression metricsRegression = (MojoModelMetricsRegression) mojoMetrics;
 
                     return new ModelMetricsRegressionGeneric(null, null, metricsRegression._nobs, metricsRegression._MSE,
-                            metricsRegression._sigma, metricsRegression._mae, metricsRegression._root_mean_squared_log_error, metricsRegression._mean_residual_deviance,
+                            metricsRegression._sigma, metricsRegression._mae, metricsRegression._root_mean_squared_log_error,
+                            metricsRegression._mean_residual_deviance, metricsRegression._mean_residual_deviance_2,
                             customMetric(mojoMetrics), mojoMetrics._description);
                 }
             case AnomalyDetection:
