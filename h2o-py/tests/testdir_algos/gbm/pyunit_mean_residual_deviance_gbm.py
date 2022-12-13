@@ -23,6 +23,22 @@ def gbm_mean_residual_deviance():
   assert isinstance(gbm_mrd['xval'],float), "Expected cross-validation mean residual deviance to be a float, but got " \
                                             "{0}".format(type(gbm_mrd['xval']))
 
+  gbm_mrd2 = gbm.mean_residual_deviance_2(train=True,valid=True,xval=True)
+  assert isinstance(gbm_mrd2['train'],float), "Expected training mean residual deviance (by non-optimized formula) to" \
+                                              " be a float, but got {0}".format(type(gbm_mrd['train']))
+  assert isinstance(gbm_mrd2['valid'],float), "Expected validation mean residual deviance (by non-optimized formula) to" \
+                                              " be a float, but got {0}".format(type(gbm_mrd['valid']))
+  assert isinstance(gbm_mrd2['xval'],float), "Expected cross-validation mean residual deviance (by non-optimized " \
+                                             "formula) to be a float, but got {0}".format(type(gbm_mrd['xval']))
+  if gbm.distribution != "poisson":
+    assert gbm_mrd == gbm_mrd2
+
+  gbm_poisson = H2OGradientBoostingEstimator(nfolds=3, distribution="poisson")
+  gbm_poisson.train(x=predictors, y=response_col, training_frame=train, validation_frame=valid)
+  gbm_mrd = gbm_poisson.mean_residual_deviance(train=True,valid=True,xval=True)
+  gbm_mrd2 = gbm_poisson.mean_residual_deviance_2(train=True,valid=True,xval=True)
+  assert gbm_mrd != gbm_mrd2
+
 
 
 if __name__ == "__main__":

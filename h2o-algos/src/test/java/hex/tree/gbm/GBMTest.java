@@ -3360,6 +3360,13 @@ public class GBMTest extends TestUtil {
         else
           Assert.assertEquals(meanDeviance,((ModelMetricsRegression) gbm._output._training_metrics)._mean_residual_deviance,1e-6*Math.abs(meanDeviance));
 
+        assertNotNull(res.vec(1));
+        double meanDeviance2 = res.vec(1).mean();
+        Log.info("Test deviance for the " + dist + " distribution");
+        if(dist == poisson)
+          assertNotEquals(meanDeviance, meanDeviance2, 1e-5);
+        else
+          assertEquals(meanDeviance, meanDeviance2, 1e-5);
       } finally {
         if (tfr != null) tfr.delete();
         if (res != null) res.delete();

@@ -18,6 +18,7 @@ def deeplearning_mean_residual_deviance():
   dl = H2ODeepLearningEstimator(nfolds=3)
   dl.train(x=predictors,y=response_col,training_frame=train,validation_frame=valid)
   dl_mrd = dl.mean_residual_deviance(train=True,valid=True,xval=True)
+  dl_mrd2 = dl.mean_residual_deviance_2(train=True,valid=True,xval=True)
   assert isinstance(dl_mrd['train'],float), "Expected training mean residual deviance to be a float, but got " \
                                             "{0}".format(type(dl_mrd['train']))
   assert isinstance(dl_mrd['valid'],float), "Expected validation mean residual deviance to be a float, but got " \
