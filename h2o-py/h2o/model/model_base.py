@@ -913,6 +913,26 @@ class ModelBase(h2o_meta(Keyed, H2ODisplay)):
         for k, v in viewitems(tm): m[k] = None if v is None else v.mean_residual_deviance()
         return list(m.values())[0] if len(m) == 1 else m
 
+    def mean_residual_deviance_2(self, train=False, valid=False, xval=False):
+        """
+        Get the Mean Residual Deviances.
+
+        If all are ``False`` (default), then return the training metric value.
+        If more than one option is set to ``True``, then return a dictionary of metrics where the keys are "train",
+        "valid", and "xval".
+
+        :param bool train: If ``train=True``, then return the Mean Residual Deviance value for the training data.
+        :param bool valid: If ``valid=True``, then return the Mean Residual Deviance value for the validation data.
+        :param bool xval:  If ``xval=True``, then return the Mean Residual Deviance value for the cross validation data.
+
+        :returns: The Mean Residual Deviance for this regression model.
+        """
+        tm = ModelBase._get_metrics(self, train, valid, xval)
+        m = {}
+        for k, v in viewitems(tm): m[k] = None if v is None else v.mean_residual_deviance_2()
+        return list(m.values())[0] if len(m) == 1 else m
+
+
     def auc(self, train=False, valid=False, xval=False):
         """
         Get the AUC (Area Under Curve).

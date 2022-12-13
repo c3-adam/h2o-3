@@ -256,6 +256,22 @@ class MetricsBase(h2o_meta(H2ODisplay)):
         """
         return self._metric_json["mean_residual_deviance"]
 
+    def mean_residual_deviance_2(self):
+        """The mean residual deviance for this set of metrics - calculated by non-optimized formula.
+
+        :examples:
+
+        >>> from h2o.estimators.gbm import H2OGradientBoostingEstimator
+        >>> airlines= h2o.import_file("https://s3.amazonaws.com/h2o-public-test-data/smalldata/airlines/AirlinesTest.csv.zip")
+        >>> air_gbm = H2OGradientBoostingEstimator(distribution="poisson")
+        >>> air_gbm.train(x=list(range(9)),
+        ...               y=9,
+        ...               training_frame=airlines,
+        ...               validation_frame=airlines)
+        >>> air_gbm.mean_residual_deviance_2(train=True,valid=False,xval=False)
+        """
+        return self._metric_json["mean_residual_deviance_2"]
+
     def auc(self):
         """The AUC for this set of metrics.
 
@@ -447,7 +463,32 @@ class MetricsBase(h2o_meta(H2ODisplay)):
         if MetricsBase._has(self._metric_json, "residual_deviance"):
             return self._metric_json["residual_deviance"]
         return None
-    
+
+    def residual_deviance_2(self):
+        """The residual deviance calculated by non-optimized formula if the model has it, otherwise None.
+
+        :examples:
+
+        >>> from h2o.estimators.glm import H2OGeneralizedLinearEstimator
+        >>> prostate = h2o.import_file("http://s3.amazonaws.com/h2o-public-test-data/smalldata/prostate/prostate.csv.zip")
+        >>> prostate[2] = prostate[2].asfactor()
+        >>> prostate[4] = prostate[4].asfactor()
+        >>> prostate[5] = prostate[5].asfactor()
+        >>> prostate[8] = prostate[8].asfactor()
+        >>> predictors = ["AGE","RACE","DPROS","DCAPS","PSA","VOL","GLEASON"]
+        >>> response = "CAPSULE"
+        >>> train, valid = prostate.split_frame(ratios=[.8],seed=1234)
+        >>> pros_glm = H2OGeneralizedLinearEstimator(family="binomial")
+        >>> pros_glm.train(x = predictors,
+        ...                y = response,
+        ...                training_frame = train,
+        ...                validation_frame = valid)
+        >>> pros_glm.residual_deviance_2()
+        """
+        if MetricsBase._has(self._metric_json, "residual_deviance_2"):
+            return self._metric_json["residual_deviance_2"]
+        return None
+
     def hglm_metric(self, metric_string):
         if MetricsBase._has(self._metric_json, metric_string):
             return self._metric_json[metric_string]
