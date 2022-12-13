@@ -237,6 +237,15 @@ class ModelBase(h2o_meta(Keyed, H2ODisplay)):
             err_msg += " You can plot standardized coefficient magnitudes by calling std_coef_plot() on the model."
         raise H2OTypeError(message=err_msg)
 
+    def row_to_tree_assignment(self, test_data):
+        """
+
+        """
+        if has_extension(self, 'RowToTreeAssignment'):
+            return self._row_to_tree_assignment(test_data)
+        err_msg = "This model doesn't support calculation of row to tree assignment."
+        raise H2OTypeError(message=err_msg)
+
     def feature_frequencies(self, test_data):
         """
         Retrieve the number of occurrences of each feature for given observations 
