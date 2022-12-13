@@ -2203,7 +2203,7 @@ public class GLMTest  extends TestUtil {
         preds = gbm.score(tfr);
 
         res = gbm.computeDeviances(tfr,preds,"myDeviances");
-        double meanDeviances = res.anyVec().mean();
+        double meanDeviances = res.vec(0).mean();
         if (gbm._output.nclasses()==2)
           Assert.assertEquals(meanDeviances,((ModelMetricsBinomial) gbm._output._training_metrics)._logloss,1e-6*Math.abs(meanDeviances));
         else if (gbm._output.nclasses()>2)
