@@ -13,7 +13,7 @@ public class ModelMetricsRegressionCoxPHGeneric extends ModelMetricsRegressionGe
                                               double meanResidualDeviance, CustomMetric customMetric,
                                               double concordance, long concordant, long discordant, long tied_y,
                                               String description) {
-        super(model, frame, nobs, mse, sigma, mae, rmsle, meanResidualDeviance, meanResidualDeviance /*not used in CoxPH*/, customMetric, description);
+        super(model, frame, nobs, mse, sigma, mae, rmsle, meanResidualDeviance, customMetric, description);
         _concordance = concordance;
         _concordant = concordant;
         _discordant = discordant;

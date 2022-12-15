@@ -27,7 +27,13 @@ public class ModelMetricsRegression extends ModelMetricsSupervised {
   public double mae() { return _mean_absolute_error; }
   public final double _root_mean_squared_log_error;
   public double rmsle() { return _root_mean_squared_log_error; }
-  public ModelMetricsRegression(Model model, Frame frame, long nobs, double mse, double sigma, double mae,double rmsle, double meanResidualDeviance, double meanResidualDeviance2, CustomMetric customMetric) {
+  public ModelMetricsRegression(Model model, Frame frame, long nobs, double mse, double sigma, double mae,double rmsle,
+                                double meanResidualDeviance, CustomMetric customMetric) {
+    this(model, frame, nobs, mse, sigma, mae, rmsle, meanResidualDeviance, Double.NaN, customMetric);
+  }
+
+  public ModelMetricsRegression(Model model, Frame frame, long nobs, double mse, double sigma, double mae,double rmsle,
+                                double meanResidualDeviance, double meanResidualDeviance2, CustomMetric customMetric) {
     super(model, frame, nobs, mse, null, sigma, customMetric);
     _mean_residual_deviance = meanResidualDeviance;
     _mean_residual_deviance_2 = meanResidualDeviance2;
