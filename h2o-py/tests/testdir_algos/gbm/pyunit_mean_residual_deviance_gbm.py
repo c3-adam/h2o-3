@@ -35,10 +35,9 @@ def gbm_mean_residual_deviance():
 
   gbm_poisson = H2OGradientBoostingEstimator(nfolds=3, distribution="poisson")
   gbm_poisson.train(x=predictors, y=response_col, training_frame=train, validation_frame=valid)
-  gbm_mrd = gbm_poisson.mean_residual_deviance(train=True,valid=True,xval=True)
-  gbm_mrd2 = gbm_poisson.mean_residual_deviance_2(train=True,valid=True,xval=True)
-  assert gbm_mrd != gbm_mrd2
-
+  gbm_mrd_poisson = gbm_poisson.mean_residual_deviance(train=True,valid=True,xval=True)
+  gbm_mrd2_poisson = gbm_poisson.mean_residual_deviance_2(train=True,valid=True,xval=True)
+  assert gbm_mrd_poisson != gbm_mrd2_poisson
 
 
 if __name__ == "__main__":

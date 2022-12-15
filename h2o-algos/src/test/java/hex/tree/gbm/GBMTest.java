@@ -3363,6 +3363,7 @@ public class GBMTest extends TestUtil {
         assertNotNull(res.vec(1));
         double meanDeviance2 = res.vec(1).mean();
         Log.info("Test deviance for the " + dist + " distribution");
+        // different formula for deviance2 (non-optimized) is implemented only for poisson distribution
         if(dist == poisson)
           assertNotEquals(meanDeviance, meanDeviance2, 1e-5);
         else
