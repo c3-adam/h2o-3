@@ -2030,6 +2030,7 @@ public abstract class Model<M extends Model<M,P,O>, P extends Model.Parameters, 
             int iact=(int)y;
             double err = iact < _output.nclasses() ? 1-cs[1+iact].atd(i) : 1;
             nc[0].addNum(w*MathUtils.logloss(err));
+            nc[1].addNum(w*MathUtils.logloss(err));
           }
         }
       }
