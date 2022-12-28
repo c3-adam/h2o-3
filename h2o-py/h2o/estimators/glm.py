@@ -113,6 +113,7 @@ class H2OGeneralizedLinearEstimator(H2OEstimator):
                  generate_variable_inflation_factors=False,  # type: bool
                  fix_tweedie_variance_power=True,  # type: bool
                  dispersion_learning_rate=0.5,  # type: float
+                 influence=None,  # type: Optional[Literal["dfbetas"]]
                  ):
         """
         :param model_id: Destination id for this model; auto-generated if not specified.
@@ -405,6 +406,10 @@ class H2OGeneralizedLinearEstimator(H2OEstimator):
                dispersion_learning_rate * change. Defaults to 0.5.
                Defaults to ``0.5``.
         :type dispersion_learning_rate: float
+        :param influence: If set to dfbetas will calculate the difference in beta when a datarow is included and
+               excluded in the dataset.
+               Defaults to ``None``.
+        :type influence: Literal["dfbetas"], optional
         """
         super(H2OGeneralizedLinearEstimator, self).__init__()
         self._parms = {}
@@ -484,6 +489,7 @@ class H2OGeneralizedLinearEstimator(H2OEstimator):
         self.generate_variable_inflation_factors = generate_variable_inflation_factors
         self.fix_tweedie_variance_power = fix_tweedie_variance_power
         self.dispersion_learning_rate = dispersion_learning_rate
+        self.influence = influence
 
     @property
     def training_frame(self):
@@ -2357,6 +2363,20 @@ class H2OGeneralizedLinearEstimator(H2OEstimator):
     def dispersion_learning_rate(self, dispersion_learning_rate):
         assert_is_type(dispersion_learning_rate, None, numeric)
         self._parms["dispersion_learning_rate"] = dispersion_learning_rate
+
+    @property
+    def influence(self):
+        """
+        If set to dfbetas will calculate the difference in beta when a datarow is included and excluded in the dataset.
+
+        Type: ``Literal["dfbetas"]``.
+        """
+        return self._parms.get("influence")
+
+    @influence.setter
+    def influence(self, influence):
+        assert_is_type(influence, None, Enum("dfbetas"))
+        self._parms["influence"] = influence
 
     Lambda = deprecated_property('Lambda', lambda_)
 

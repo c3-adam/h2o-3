@@ -1266,6 +1266,21 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
         Value cv = DKV.get(_parms._checkpoint);
         CheckpointUtils.getAndValidateCheckpointModel(this, CHECKPOINT_NON_MODIFIABLE_FIELDS, cv);
       }
+
+      if (_parms._influence != null) {
+        if (!(gaussian.equals(_parms._family) || binomial.equals(_parms._family)))
+          error("influence", " can only be specified for the gaussian and binomial families.");
+        
+        if (_parms._lambda == null)
+          _parms._lambda = new double[]{0.0};
+        
+        if (_parms._lambda != null && Arrays.stream(_parms._lambda).filter(x -> x>0).count() > 0) 
+          error("regularization", "regularization is not allowed when influence is set to dfbetas.  " +
+                  "Please set all lambdas to 0.0.");
+        
+        if (_parms._lambda_search)
+          error("lambda_search", "lambda_search is not allowed when influence is set to dfbetas.");
+      }
       buildModel();
     }
   }

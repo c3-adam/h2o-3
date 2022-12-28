@@ -417,6 +417,7 @@ public class GLMModel extends Model<GLMModel,GLMModel.GLMParameters,GLMModel.GLM
     public int _max_series_index = 5000;
     public boolean _debugTDispersionOnly = false;  // debug only and will slow down model building
     public double _dispersion_learning_rate = 0.5;
+    public Influence _influence;  // if set to dfbetas will calculate the difference of betas obtained from including and excluding a data row
     
     public void validate(GLM glm) {
       if (_remove_collinear_columns) {
@@ -800,6 +801,7 @@ public class GLMModel extends Model<GLMModel,GLMModel.GLMParameters,GLMModel.GLM
     public enum DispersionMethod {pearson, ml, deviance} // methods used to estimate dispersion parameter, ML = maximum likelhood
     public static enum GLMType {glm, gam, hglm} // special functions are performed depending on GLMType.  Internal use
     public static enum Link {family_default, identity, logit, log, inverse, tweedie, multinomial, ologit, oprobit, ologlog}
+    public static enum Influence {dfbetas};
 
     public static enum Solver {AUTO, IRLSM, L_BFGS, COORDINATE_DESCENT_NAIVE, COORDINATE_DESCENT, GRADIENT_DESCENT_LH, GRADIENT_DESCENT_SQERR}
 
