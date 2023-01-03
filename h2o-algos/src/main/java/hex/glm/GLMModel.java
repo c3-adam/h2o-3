@@ -1340,6 +1340,7 @@ public class GLMModel extends Model<GLMModel,GLMModel.GLMParameters,GLMModel.GLM
     public int _selected_submodel_idx;  // submodel index with best deviance
     public int _best_submodel_idx;      // submodel index with best deviance
     public int _best_lambda_idx;        // the same as best_submodel_idx, kept to ensure backward compatibility
+    public Key<Frame> _regression_influence_diagnostics;
     public double lambda_best(){return _submodels.length == 0 ? -1 : _submodels[_best_submodel_idx].lambda_value;}
     public double dispersion(){ return _dispersion;}
     public boolean dispersionEstimated() {return _dispersionEstimated;}
@@ -2195,4 +2196,24 @@ public class GLMModel extends Model<GLMModel,GLMModel.GLMParameters,GLMModel.GLM
       return isFeatureUsedInPredict(featureIdx, _output._global_beta);
     }
   }
+
+  @Override
+  protected Futures remove_impl(Futures fs, boolean cascade) {
+    super.remove_impl(fs, cascade);
+    Keyed.remove(_output._regression_influence_diagnostics, fs, cascade);
+    return fs;
+  }
+
+  @Override
+  protected AutoBuffer writeAll_impl(AutoBuffer ab) {
+    if (_output._regression_influence_diagnostics != null) ab.putKey(_output._regression_influence_diagnostics);
+    return super.writeAll_impl(ab);
+  }
+
+  @Override
+  protected Keyed readAll_impl(AutoBuffer ab, Futures fs) {
+    if (_output._regression_influence_diagnostics!= null)
+      ab.getKey(_output._regression_influence_diagnostics, fs);
+    return super.readAll_impl(ab, fs);
+  }  
 }

@@ -56,6 +56,7 @@ import static hex.glm.GLMModel.GLMParameters.CHECKPOINT_NON_MODIFIABLE_FIELDS;
 import static hex.glm.GLMModel.GLMParameters.DispersionMethod.*;
 import static hex.glm.GLMModel.GLMParameters.Family.*;
 import static hex.glm.GLMModel.GLMParameters.GLMType.gam;
+import static hex.glm.GLMModel.GLMParameters.Influence.dfbetas;
 import static hex.glm.GLMUtils.*;
 import static water.fvec.Vec.T_NUM;
 
@@ -3087,6 +3088,10 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
       }
       if (!_parms._HGLM)  // no need to do for HGLM
         scoreAndUpdateModel();
+      
+      if (dfbetas.equals(_parms._influence))
+        genRID(_parms, _model, _dinfo);
+      
       if (_parms._generate_variable_inflation_factors) {
         _model._output._vif_predictor_names = _model.buildVariableInflationFactors(_train, _dinfo);
       }// build variable inflation factors for numerical predictors
@@ -3115,6 +3120,12 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
       }
     }
 
+
+    public
+    Frame genRID(GLMModel.GLMParameters parms,  GLMModel model, DataInfo dinfo) {
+      return null;
+    }
+    
     private boolean betaConstraintsCheckEnabled() {
       return Boolean.parseBoolean(getSysProperty("glm.beta.constraints.checkEnabled", "true")) &&
               !multinomial.equals(_parms._family) && !ordinal.equals(_parms._family);
