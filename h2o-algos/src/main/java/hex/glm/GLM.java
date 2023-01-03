@@ -3090,7 +3090,7 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
         scoreAndUpdateModel();
       
       if (dfbetas.equals(_parms._influence))
-        genRID(_parms, _model, _dinfo);
+        genRID();
       
       if (_parms._generate_variable_inflation_factors) {
         _model._output._vif_predictor_names = _model.buildVariableInflationFactors(_train, _dinfo);
@@ -3121,8 +3121,7 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
     }
 
 
-    public
-    Frame genRID(GLMModel.GLMParameters parms,  GLMModel model, DataInfo dinfo) {
+    public Frame genRID() {
       return null;
     }
     
