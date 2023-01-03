@@ -865,6 +865,9 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
     hide("_balance_classes", "Not applicable since class balancing is not required for GLM.");
     hide("_max_after_balance_size", "Not applicable since class balancing is not required for GLM.");
     hide("_class_sampling_factors", "Not applicable since class balancing is not required for GLM.");
+    if (_parms._influence != null && (_parms._nfolds > 0 || _parms._fold_column != null)) {
+      error("influence", " cross-validation is not allowed when influence is set to dfbetas.");
+    }
     _parms.validate(this);
     if(_response != null) {
       if(!isClassifier() && _response.isCategorical())
