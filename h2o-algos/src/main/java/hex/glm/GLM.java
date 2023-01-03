@@ -1279,7 +1279,13 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
                   "Please set all lambdas to 0.0.");
         
         if (_parms._lambda_search)
-          error("lambda_search", "lambda_search is not allowed when influence is set to dfbetas.");
+          error("lambda_search", "lambda_search and regularization are not allowed when influence is set to dfbetas.");
+        
+        if (AUTO.equals(_parms._solver))
+          _parms._solver = Solver.IRLSM;
+        
+        if (!AUTO.equals(_parms._solver)  && !Solver.IRLSM.equals(_parms._solver))
+          error("solver", "regression influence diagnostic is only calculated for IRLSM solver.");
       }
       buildModel();
     }
