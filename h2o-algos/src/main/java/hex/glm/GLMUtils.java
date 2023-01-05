@@ -1,6 +1,9 @@
 package hex.glm;
 
+import hex.DataInfo;
+import hex.gram.Gram;
 import water.DKV;
+import water.Job;
 import water.Key;
 import water.MemoryManager;
 import water.fvec.Frame;
@@ -315,5 +318,36 @@ public class GLMUtils {
       smoothval += calSmoothNess(beta[classInd], penaltyMatrix, gamColIndices);
     }
     return smoothval;
+  }
+
+  /***
+   *
+   * This method will generate the inverse of the gram matrix.
+   *
+   */
+  public static double[][] cholInv(GLMModel.GLMParameters parms, ComputationState state, Job job) {
+    Gram.Cholesky chol;
+    DataInfo activeData = state.activeData();
+    double[] beta = state.beta();
+    if (parms._standardize) { // compute non-standardized t(X)%*%W%*%X
+      double[] beta_nostd = activeData.denormalizeBeta(beta);
+      DataInfo.TransformType transform = activeData._predictor_transform;
+      activeData.setPredictorTransform(DataInfo.TransformType.NONE);
+      Gram g = new GLMTask.GLMIterationTask(job._key, activeData, new GLMModel.GLMWeightsFun(parms), beta_nostd).doAll(activeData._adaptedFrame)._gram;
+      activeData.setPredictorTransform(transform); // just in case, restore the transform
+      chol = g.cholesky(null);
+    } else {  // just rebuild gram with latest GLM coefficients
+      Gram g = new GLMTask.GLMIterationTask(job._key, activeData, new GLMModel.GLMWeightsFun(parms), beta).doAll(activeData._adaptedFrame)._gram;
+      chol = g.cholesky(null);
+    }
+    return chol.getInv();
+  }
+  
+  public static double[] sumGramInv(double[][] matrix) {
+    int matrixSize = matrix.length;
+    double[] sumGram = new double[matrixSize];
+    for (int index=0; index<matrixSize; index++)
+      ArrayUtils.add(sumGram, matrix[index]);
+    return sumGram;
   }
 }
