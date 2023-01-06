@@ -2138,14 +2138,28 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
         Log.warn(LogMsg("Got Non SPD matrix, stopped."));
       }
     }
-    
+
+    /**
+     * This is more or less a copy of what you have done with following exception:
+     * 1. theta is set to be theta - grad/hess;
+     * 2. if the new theta < 0.0, I just set it to be theta = 0.5*_parms._theta.  Basically, the direction given by 
+     * grad/hess is negative in this case meaning the new theta should be decreased this time.  However, the magnitude
+     * is too big.  Hence, instead of taking the absolute value, I just reduce theta by half of its current value.
+     * 
+     * I have added the calculation of the negative likelihood here.  You complain about the theta values diverging.  I
+     * have a solution for this.  I noticed that when the theta value is not the correct only, you see the likelihood
+     * function value increase.  Hence, you can decide if we should take the theta value by looking at the likelihood
+     * value changes.  If the new likelihood increase compared to the last one, don't take the theta update.  If the
+     * new likelihood decreases, take the theta update.
+     * 
+     * I will leave it to you to decide how to implement this piece of information.
+     */
     public  double estimateNegBinomialDispersion(double[] beta, Solver s) {
       Vec weights = _dinfo._weights
               ? _dinfo.getWeightsVec()
               : _dinfo._adaptedFrame.makeCompatible(new Frame(Vec.makeOne(_dinfo._adaptedFrame.numRows())))[0];
       Vec response = _dinfo._adaptedFrame.vec(_dinfo.responseChunkId(0));
-
-      //   for (int i = 0; i < Math.max(1, _parms._max_iterations_dispersion); i++) {
+      
       DispersionTask.GenPrediction gPred = new DispersionTask.GenPrediction(beta, _model, _dinfo).doAll(
               1, Vec.T_NUM, _dinfo._adaptedFrame);
       Vec mu = gPred.outputFrame(Key.make(), new String[]{"prediction"}, null).vec(0);
@@ -2154,7 +2168,7 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
       List<Double> likelihood = new ArrayList<>();
       List<Double> thetaL = new ArrayList<>();
 
-      for (int rInd = 0; rInd < 10; rInd++) {
+      for (int rInd = 0; rInd < 3; rInd++) {
         // calculate gram to get at the likelihood
         ComputationState.GramXY gram = _state.computeGram(beta, s);
         likelihood.add(gram.likelihood);

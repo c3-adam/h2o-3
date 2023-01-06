@@ -36,7 +36,7 @@ helper_test_glm <- function(data_env) {
 
     hdata <- as.h2o(data)
     browser()
-    hglm <- h2o.glm(y = "result", training_frame = hdata, family = "negativebinomial", link = "log", theta = 10, seed = 12345, lambda=0, dispersion_parameter_method = "ml")
+    hglm <- h2o.glm(y = "result", training_frame = hdata, family = "negativebinomial", link = "log", theta = 1, seed = 12345, lambda=0, dispersion_parameter_method = "ml")
     hdiff <- abs(hglm@model$coefficients_table$coefficients - c(intercept, coefs))
 
     hdiff_wo_intercept_mean <- mean(hdiff[-1])
