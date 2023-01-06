@@ -2067,6 +2067,16 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
       _state._iter++;
       _state.updateState(beta, l);
     }
+    
+    private void fitIRLSMML(Solver s) {
+      for (int index=0; index<_parms._max_iterations_dispersion; index++) {
+        double initTheta = _parms._theta;
+        fitIRLSM(s);
+        estimateNegBinomialDispersion(_state.beta(), s);
+        if (Math.abs(initTheta - _parms._theta) < _parms._dispersion_epsilon)
+          break;
+      }
+    }
 
     private void fitIRLSM(Solver s) {
       GLMWeightsFun glmw = new GLMWeightsFun(_parms);
@@ -2123,38 +2133,50 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
               bc.applyAllBounds(betaCnd);
             Log.info(LogMsg("computed in " + (t2 - t1) + "+" + (t3 - t2) + "=" + (t3 - t1) + "ms, step = " + 1 + ((_lslvr != null) ? ", l1solver " + _lslvr : "")));
           }
-          if (_model._parms._dispersion_parameter_method.equals(ml)) {
-            if (negativebinomial.equals(_parms._family)) {
-              Vec weights = _dinfo._weights
-                      ? _dinfo.getWeightsVec()
-                      : _dinfo._adaptedFrame.makeCompatible(new Frame(Vec.makeOne(_dinfo._adaptedFrame.numRows())))[0];
-              Vec response = _dinfo._adaptedFrame.vec(_dinfo.responseChunkId(0));
-
-             //   for (int i = 0; i < Math.max(1, _parms._max_iterations_dispersion); i++) {
-                  DispersionTask.GenPrediction gPred = new DispersionTask.GenPrediction(betaCnd, _model, _dinfo).doAll(
-                          1, Vec.T_NUM, _dinfo._adaptedFrame);
-                  Vec mu = gPred.outputFrame(Key.make(), new String[]{"prediction"}, null).vec(0);
-
-                  double theta = _parms._theta;
-
-                  NegativeBinomialGradientAndHessian nbGrad = new NegativeBinomialGradientAndHessian(theta).doAll(mu, response, weights);
-
-                  double grad = nbGrad._grad;
-                  double hess = nbGrad._hess;
-                 // if (Double.isNaN(grad)) break;  // diverged
-                  theta = Math.abs(theta - _parms._dispersion_learning_rate * grad / hess);
-                  if (Math.abs(theta - _parms._theta) < _parms._dispersion_epsilon){
-                    updateTheta(theta);
-                  //  break;
-                  }
-                  updateTheta(theta);
-                }
-            //}
-          }
         }
       } catch (NonSPDMatrixException e) {
         Log.warn(LogMsg("Got Non SPD matrix, stopped."));
       }
+    }
+    
+    public  double estimateNegBinomialDispersion(double[] beta, Solver s) {
+      Vec weights = _dinfo._weights
+              ? _dinfo.getWeightsVec()
+              : _dinfo._adaptedFrame.makeCompatible(new Frame(Vec.makeOne(_dinfo._adaptedFrame.numRows())))[0];
+      Vec response = _dinfo._adaptedFrame.vec(_dinfo.responseChunkId(0));
+
+      //   for (int i = 0; i < Math.max(1, _parms._max_iterations_dispersion); i++) {
+      DispersionTask.GenPrediction gPred = new DispersionTask.GenPrediction(beta, _model, _dinfo).doAll(
+              1, Vec.T_NUM, _dinfo._adaptedFrame);
+      Vec mu = gPred.outputFrame(Key.make(), new String[]{"prediction"}, null).vec(0);
+
+      double theta = _parms._theta;
+      List<Double> likelihood = new ArrayList<>();
+      List<Double> thetaL = new ArrayList<>();
+
+      for (int rInd = 0; rInd < 10; rInd++) {
+        // calculate gram to get at the likelihood
+        ComputationState.GramXY gram = _state.computeGram(beta, s);
+        likelihood.add(gram.likelihood);
+        thetaL.add(theta);
+        NegativeBinomialGradientAndHessian nbGrad = new NegativeBinomialGradientAndHessian(theta).doAll(mu, response, weights);
+        double grad = nbGrad._grad;
+        double hess = nbGrad._hess;
+        if (hess != 0) {
+          // if (Double.isNaN(grad)) break;  // diverged
+          theta = theta - grad / hess;
+          if (theta < 0)
+            theta = _parms._theta / 2;
+
+          if (Math.abs(theta - _parms._theta) < _parms._dispersion_epsilon) {
+            updateTheta(theta);
+            break;  // done, minor change
+          }
+          updateTheta(theta);
+          
+        }
+      }
+      return theta;
     }
 
     private void updateTheta(double theta){
@@ -2414,8 +2436,12 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
               fitIRLSM_ordinal_default(solver);
             else if (gaussian.equals(_parms._family) && Link.identity.equals(_parms._link))
               fitLSM(solver);
-            else
-              fitIRLSM(solver);
+            else {
+              if (ml.equals(_parms._dispersion_parameter_method) && negativebinomial.equals(_parms._family))
+                fitIRLSMML(solver);
+              else
+                fitIRLSM(solver);
+            }
             break;
           case GRADIENT_DESCENT_LH:
           case GRADIENT_DESCENT_SQERR:
@@ -2452,12 +2478,13 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
           } else if (ml.equals(_parms._dispersion_parameter_method)) {
             if (gamma.equals(_parms._family)) {
               ComputeGammaMLSETsk mlCT = new ComputeGammaMLSETsk(null, _state.activeData(), _job._key, beta,
-                      _parms).doAll(_state.activeData()._adaptedFrame);
+                      _parms).doAll(_state.activeData()._adaptedFrame); // if standardize, beta is standardized, _state.activeData() contains both normMul, normSub
 
               double oneOverSe = estimateGammaMLSE(mlCT, 1.0 / se, beta, _parms, _state, _job, _model);
               se = 1.0 / oneOverSe;
             } else if (negativebinomial.equals(_parms._family)) {
-              se = estimateNegBinomialDispersionFisherScoring(_parms, _model, _job, beta, _state.activeData());
+             // se = estimateNegBinomialDispersionFisherScoring(_parms, _model, _job, beta, _state.activeData());
+              se = _parms._theta;
             } else if (_tweedieDispersionOnly) {
               se = estimateTweedieDispersionOnly(_parms, _model, _job, beta, _state.activeData());
             }
