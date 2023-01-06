@@ -2073,7 +2073,7 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
         double initTheta = _parms._theta;
         fitIRLSM(s);
         estimateNegBinomialDispersion(_state.beta(), s);
-        if (Math.abs(initTheta - _parms._theta) < _parms._dispersion_epsilon)
+        if (Math.abs(initTheta - _parms._theta)/Math.max(initTheta, _parms._theta) < _parms._dispersion_epsilon)
           break;
       }
     }
@@ -2182,7 +2182,8 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
           if (theta < 0)
             theta = _parms._theta / 2;
 
-          if (Math.abs(theta - _parms._theta) < _parms._dispersion_epsilon) {
+          //if (Math.abs(theta - _parms._theta)/Math.max(theta, _parms._theta) < _parms._dispersion_epsilon) {
+          if (Math.abs(theta - _parms._theta)/Math.max(theta, _parms._theta) < _parms._dispersion_epsilon) {
             updateTheta(theta);
             break;  // done, minor change
           }
