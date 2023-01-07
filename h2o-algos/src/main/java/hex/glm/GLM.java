@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static hex.ModelMetrics.calcVarImp;
+import static hex.gam.MatrixFrameUtils.GamUtils.keepFrameKeys;
 import static hex.glm.ComputationState.extractSubRange;
 import static hex.glm.ComputationState.fillSubRange;
 import static hex.glm.DispersionUtils.estimateGammaMLSE;
@@ -2905,7 +2906,14 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
           DKV.remove(_betaConstraints._key);
           _betaConstraints.delete();
         }
-        if (_model != null) _model.unlock(_job);
+        if (_model != null) {
+          if (_parms._influence != null) {
+            final List<Key> keep = new ArrayList<>();
+            keepFrameKeys(keep, _model._output._regression_influence_diagnostics);
+            Scope.untrack(keep.toArray(new Key[keep.size()]));
+          }
+          _model.unlock(_job);
+        }
       }
     }
     
@@ -3113,14 +3121,16 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
      * 
      * @return
      */
-    public Frame genRID() {
-      double[] beta = _model.beta();  // denomalized beta
+    public void genRID() {
+      double[] beta = _model.beta();  // denormalized beta
       double[][] inv = cholInv(_parms, _state, _job);
-      double[] sumInv = sumGramInv(inv);
       String[] names = Arrays.stream(_model._output.coefficientNames()).map(x -> "DFBETA_"+x).toArray(String[]::new);;
-      GenRegInfDiagnostics genRID = new GenRegInfDiagnostics(_job, beta, sumInv,inv, _parms, _dinfo);
+      GenRegInfDiagnostics genRID = new GenRegInfDiagnostics(_job, beta, inv, _parms, _dinfo);
       genRID.doAll(names.length, Vec.T_NUM, _dinfo._adaptedFrame);
-      return null;
+      Frame RIDFrame = genRID.outputFrame(Key.make(), names, new String[names.length][]);
+      // concatenate RIDFrame to the training data frame
+      Frame combinedFrame = buildRIDFrame(_parms, _train.deepCopy(Key.make().toString()), RIDFrame);
+      _model._output._regression_influence_diagnostics = combinedFrame.getKey();
     }
     
     private boolean betaConstraintsCheckEnabled() {

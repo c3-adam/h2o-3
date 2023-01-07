@@ -1089,17 +1089,21 @@ public class DataInfo extends Keyed<DataInfo> {
 
       return res;
     }
-
+    
     public double[] expandCats() {
-      return expandCats(null);
-    }
-    public double[] expandCats(double[] res) {
       if(isSparse() || _responses > 0) throw H2O.unimpl();
+      return expandCatsPredsOnly(null);
+    }
+
+    public double[] expandCatsPredsOnly(double[] res) {
+      if(isSparse()) throw H2O.unimpl();
 
       int N = fullN();
       int numStart = numStart();
       if (res == null)
         res = new double[N + (_intercept ? 1:0)];
+      else
+        Arrays.fill(res, 0);
 
       for(int i = 0; i < nBins; ++i)
         res[binIds[i]] = 1;

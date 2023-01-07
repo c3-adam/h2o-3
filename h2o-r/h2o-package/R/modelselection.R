@@ -125,6 +125,8 @@
 #'        the predictor subsets themselves.  Default to true. Defaults to TRUE.
 #' @param p_values_threshold For mode='backward' only.  If specified, will stop the model building process when all coefficientsp-values
 #'        drop below this threshold  Defaults to 0.
+#' @param influence If set to dfbetas will calculate the difference in beta when a datarow is included and excluded in the
+#'        dataset. Must be one of: "dfbetas".
 #' @examples
 #' \dontrun{
 #' library(h2o)
@@ -192,7 +194,8 @@ h2o.modelSelection <- function(x,
                                min_predictor_number = 1,
                                mode = c("allsubsets", "maxr", "maxrsweep", "backward"),
                                build_glm_model = TRUE,
-                               p_values_threshold = 0)
+                               p_values_threshold = 0,
+                               influence = c("dfbetas"))
 {
   # Validate required training_frame first and other frame args: should be a valid key or an H2OFrame object
   training_frame <- .validate.H2OFrame(training_frame, required=TRUE)
@@ -323,6 +326,8 @@ h2o.modelSelection <- function(x,
     parms$build_glm_model <- build_glm_model
   if (!missing(p_values_threshold))
     parms$p_values_threshold <- p_values_threshold
+  if (!missing(influence))
+    parms$influence <- influence
 
   # Error check and build model
   model <- .h2o.modelJob('modelselection', parms, h2oRestApiVersion=3, verbose=FALSE)
@@ -384,6 +389,7 @@ h2o.modelSelection <- function(x,
                                                mode = c("allsubsets", "maxr", "maxrsweep", "backward"),
                                                build_glm_model = TRUE,
                                                p_values_threshold = 0,
+                                               influence = c("dfbetas"),
                                                segment_columns = NULL,
                                                segment_models_id = NULL,
                                                parallelism = 1)
@@ -519,6 +525,8 @@ h2o.modelSelection <- function(x,
     parms$build_glm_model <- build_glm_model
   if (!missing(p_values_threshold))
     parms$p_values_threshold <- p_values_threshold
+  if (!missing(influence))
+    parms$influence <- influence
 
   # Build segment-models specific parameters
   segment_parms <- list()

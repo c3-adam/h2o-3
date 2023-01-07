@@ -89,6 +89,7 @@ class H2OModelSelectionEstimator(H2OEstimator):
                  mode="maxr",  # type: Literal["allsubsets", "maxr", "maxrsweep", "backward"]
                  build_glm_model=True,  # type: bool
                  p_values_threshold=0.0,  # type: float
+                 influence=None,  # type: Optional[Literal["dfbetas"]]
                  ):
         """
         :param model_id: Destination id for this model; auto-generated if not specified.
@@ -320,6 +321,10 @@ class H2OModelSelectionEstimator(H2OEstimator):
                all coefficientsp-values drop below this threshold
                Defaults to ``0.0``.
         :type p_values_threshold: float
+        :param influence: If set to dfbetas will calculate the difference in beta when a datarow is included and
+               excluded in the dataset.
+               Defaults to ``None``.
+        :type influence: Literal["dfbetas"], optional
         """
         super(H2OModelSelectionEstimator, self).__init__()
         self._parms = {}
@@ -381,6 +386,7 @@ class H2OModelSelectionEstimator(H2OEstimator):
         self.mode = mode
         self.build_glm_model = build_glm_model
         self.p_values_threshold = p_values_threshold
+        self.influence = influence
 
     @property
     def training_frame(self):
@@ -1218,6 +1224,20 @@ class H2OModelSelectionEstimator(H2OEstimator):
     def p_values_threshold(self, p_values_threshold):
         assert_is_type(p_values_threshold, None, numeric)
         self._parms["p_values_threshold"] = p_values_threshold
+
+    @property
+    def influence(self):
+        """
+        If set to dfbetas will calculate the difference in beta when a datarow is included and excluded in the dataset.
+
+        Type: ``Literal["dfbetas"]``.
+        """
+        return self._parms.get("influence")
+
+    @influence.setter
+    def influence(self, influence):
+        assert_is_type(influence, None, Enum("dfbetas"))
+        self._parms["influence"] = influence
 
 
     def coef_norm(self, predictor_size=None):

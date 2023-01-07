@@ -178,6 +178,14 @@ public class ModelSelection extends ModelBuilder<hex.modelselection.ModelSelecti
         if (maxrsweep.equals(_parms._mode))
             warn("validation_frame", " is not used in choosing the best k subset for ModelSelection" +
                     " models with maxrsweep.");
+        
+        if (maxrsweep.equals(_parms._mode) && !_parms._build_glm_model && _parms._influence != null)
+            error("influence", " can only be set if glm models are built.  With maxrsweep model without" +
+                    " build_glm_model = true, no GLM models will be built and hence no regression influence diagnostics" +
+                    " can be calculated.");
+        
+        if (_parms._influence != null && (!gaussian.equals(_parms._family) || !binomial.equals(_parms._family)))
+            error("influence", " is only available for gaussian and binomial families.");
     }
 
     protected void checkMemoryFootPrint(int p) {

@@ -56,6 +56,13 @@ public class GLMModel extends Model<GLMModel,GLMModel.GLMParameters,GLMModel.GLM
     _nobs = nobs;
     _nullDOF = nobs - (parms._intercept?1:0);
   }
+  
+  public Frame getRIDFrame() {
+    if (_output._regression_influence_diagnostics != null)
+      return DKV.getGet(_output._regression_influence_diagnostics);
+    else 
+      return null;
+  }
 
   @Override
   public void initActualParamValues() {

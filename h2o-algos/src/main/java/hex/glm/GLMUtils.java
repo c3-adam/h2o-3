@@ -2,10 +2,7 @@ package hex.glm;
 
 import hex.DataInfo;
 import hex.gram.Gram;
-import water.DKV;
-import water.Job;
-import water.Key;
-import water.MemoryManager;
+import water.*;
 import water.fvec.Frame;
 import water.fvec.Vec;
 import water.util.ArrayUtils;
@@ -349,5 +346,24 @@ public class GLMUtils {
     for (int index=0; index<matrixSize; index++)
       ArrayUtils.add(sumGram, matrix[index]);
     return sumGram;
+  }
+  
+  public static Frame buildRIDFrame(GLMModel.GLMParameters parms, Frame train, Frame RIDFrame) {
+    Vec responseVec = train.remove(parms._response_column);
+    Vec weightsVec = null;
+    Vec offsetVec = null;
+    Vec foldVec = null;
+    if (parms._offset_column != null)
+      offsetVec = train.remove(parms._offset_column);
+    if (parms._weights_column != null) // move weight vector to be the last vector before response variable
+      weightsVec = train.remove(parms._weights_column);
+      train.add(RIDFrame.names(), RIDFrame.removeAll());
+    if (weightsVec != null)
+      train.add(parms._weights_column, weightsVec);
+    if (offsetVec != null)
+      train.add(parms._offset_column, offsetVec);
+    if (responseVec != null)
+      train.add(parms._response_column, responseVec);
+    return train;
   }
 }
