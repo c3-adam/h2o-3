@@ -9,12 +9,12 @@ import water.util.ArrayUtils;
 
 import java.util.Arrays;
 
-import static hex.glm.GLMModel.GLMParameters.Family.gaussian;
+import static hex.glm.GLMModel.GLMParameters.Family.binomial;
 
 public class GenRegInfDiagnostics extends MRTask<GenRegInfDiagnostics> {
   final double[] _beta; // non-standized GLM coefficients
   final double[][] _gramInv;
-  final boolean _isGaussian;  // true for gaussian, false for binomial
+  final boolean _isBinomial;  // true for gaussian, false for binomial
   final Job _j;
   final int _betaSize;
   final GLMModel.GLMParameters _parms;
@@ -25,10 +25,9 @@ public class GenRegInfDiagnostics extends MRTask<GenRegInfDiagnostics> {
     _beta = beta; // denormalized beta
     _betaSize = beta.length;
     _gramInv = gramInv;// denormalized gram inv
-    _isGaussian = gaussian.equals(parms._family);
+    _isBinomial = binomial.equals(parms._family);
     _parms = parms;
     _dinfo = dinfo;
-    _dinfo._normMul = null;   // make sure we read in non-standardized data
   }
 
   @Override
@@ -55,11 +54,18 @@ public class GenRegInfDiagnostics extends MRTask<GenRegInfDiagnostics> {
       Arrays.fill(dfbetas, 0.0);
     } else {
       r.expandCatsPredsOnly(row2Array);  // change Row to array
-      // generate diagonal 1.0/mll = 1.0/(1-hll)
-      double oneOverMLL = gen1OverMLL(row2Array, xTimesGramInv);
       // generate residual
       double residual = genResidual(r);
+      // generate diagonal 1.0/mll = 1.0/(1-hll)
+      double sqrtVdiag=0;
+      if (_isBinomial) {
+        sqrtVdiag = Math.sqrt(residual * (1 - residual));
+        ArrayUtils.mult(row2Array, sqrtVdiag);
+      }
+      double oneOverMLL = gen1OverMLL(row2Array, xTimesGramInv);
       // generate equation 3
+      if (_isBinomial)  // undo the sqrtVdiag*Xl
+        ArrayUtils.mult(row2Array, 1.0/sqrtVdiag);
       genDfBetas(oneOverMLL, residual, row2Array, dfbetas);
     }
     for (int c = 0; c < _betaSize; c++) // copy dfbetas over to new chunks
@@ -82,6 +88,9 @@ public class GenRegInfDiagnostics extends MRTask<GenRegInfDiagnostics> {
   
   public double genResidual(DataInfo.Row r) {
     double resp = r.response(0);
-    return resp - _parms.linkInv(r.innerProduct(_beta)+r.offset);
+    if (_isBinomial)
+      return 1-_parms.linkInv(r.innerProduct(_beta)+r.offset);
+    else
+      return resp - _parms.linkInv(r.innerProduct(_beta)+r.offset);
   }
 }

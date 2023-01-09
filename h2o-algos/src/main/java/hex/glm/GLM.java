@@ -3083,7 +3083,7 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
         scoreAndUpdateModel();
       
       if (dfbetas.equals(_parms._influence))
-        genRID();
+        genRID(_chol);
       
       if (_parms._generate_variable_inflation_factors) {
         _model._output._vif_predictor_names = _model.buildVariableInflationFactors(_train, _dinfo);
@@ -3118,19 +3118,19 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
      * 1. generate the inverse of gram matrix;
      * 2. generate sum of all columns of gram matrix;
      * 3. task is called to generate the hat matrix equation 2 or equation 6 and the diagnostic in equation 3 or 7.
-     * 
-     * @return
      */
-    public void genRID() {
-      double[] beta = _model.beta();  // denormalized beta
-      double[][] inv = cholInv(_parms, _state, _job);
+    public void genRID(Cholesky chol) {
+      double[] beta = _state.beta();  // if standardize=true, standardized coeff, else non-standardized coeff
+      double[][] inv = chol.getInv();
       String[] names = Arrays.stream(_model._output.coefficientNames()).map(x -> "DFBETA_"+x).toArray(String[]::new);;
       GenRegInfDiagnostics genRID = new GenRegInfDiagnostics(_job, beta, inv, _parms, _dinfo);
       genRID.doAll(names.length, Vec.T_NUM, _dinfo._adaptedFrame);
       Frame RIDFrame = genRID.outputFrame(Key.make(), names, new String[names.length][]);
+      Scope.track(RIDFrame);
       // concatenate RIDFrame to the training data frame
       Frame combinedFrame = buildRIDFrame(_parms, _train.deepCopy(Key.make().toString()), RIDFrame);
       _model._output._regression_influence_diagnostics = combinedFrame.getKey();
+      DKV.put(combinedFrame);
     }
     
     private boolean betaConstraintsCheckEnabled() {
