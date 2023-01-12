@@ -871,6 +871,9 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
     if (_parms._influence != null && (_parms._nfolds > 0 || _parms._fold_column != null)) {
       error("influence", " cross-validation is not allowed when influence is set to dfbetas.");
     }
+    if (_parms._influence != null && _parms._standardize)
+      error("standardize", " must be set to false if influence = dfbetas.");
+    
     _parms.validate(this);
     if(_response != null) {
       if(!isClassifier() && _response.isCategorical())
@@ -1291,6 +1294,9 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
           _parms._solver = IRLSM;
         else if (!Solver.IRLSM.equals(_parms._solver))
           error("solver", "regression influence diagnostic is only calculated for IRLSM solver.");
+        
+        _parms._compute_p_values = true;  // automatically turned these on
+        _parms._remove_collinear_columns = true;
       }
       buildModel();
     }

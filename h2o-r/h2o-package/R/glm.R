@@ -788,6 +788,18 @@ h2o.makeGLMModel <- function(model,beta) {
   m
 }
 
+#' Extracts the H2OFrame containing the model predictors, response and dfbetas
+#'
+#' @param model is a H2OModel with algorithm name of glm
+#' @export   
+h2o.get_regression_influence_diagnostics <- function(model) {
+  if( is(model, "H2OModel") && (model@algorithm=='glm') && (model@allparameters$influence == 'dfbetas')) {
+    return(h2o.getFrame(model@model$regression_influence_diagnostics$name))
+  } else {
+    stop("regression influence diagnostic is only available when infuence='dfbetas' for GLM binomial and gaussian families.")
+  }
+}
+
 #' Extract best lambda value found from glm model.
 #'
 #' This function allows setting betas of an existing glm model.
